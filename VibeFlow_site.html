@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeFlow — Умный планировщик и фокус-таймер</title>
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --bg-card: rgba(18, 24, 39, 0.82);
+      --bg-soft: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-2: #22d3ee;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      --radius: 20px;
+    }
+
+    body.light {
+      --bg: #f1f5f9;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-soft: rgba(15, 23, 42, 0.04);
+      --border: rgba(15, 23, 42, 0.1);
+      --text: #0f172a;
+      --muted: #475569;
+      --accent: #4f46e5;
+      --accent-2: #0891b2;
+      --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 18%, rgba(99, 102, 241, 0.22), transparent 36%),
+        radial-gradient(circle at 88% 12%, rgba(34, 211, 238, 0.16), transparent 34%),
+        radial-gradient(circle at 50% 95%, rgba(16, 185, 129, 0.12), transparent 38%),
+        var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+      transition: background 0.3s ease, color 0.3s ease;
+      padding: 24px 16px 48px;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 20px;
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+    }
+
+    .brand h1 {
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-icon {
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.16);
+      color: var(--accent-2);
+    }
+
+    /* Timer Section */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--bg-soft);
+      padding: 6px;
+      border-radius: 14px;
+      margin-bottom: 22px;
+    }
+
+    .mode-tab {
+      padding: 9px 6px;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .mode-tab.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+    }
+
+    .timer-ring-wrap {
+      position: relative;
+      width: 230px;
+      height: 230px;
+      margin: 0 auto 22px;
+      display: grid;
+      place-items: center;
+    }
+
+    .timer-svg {
+      width: 230px;
+      height: 230px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 10;
+    }
+
+    .ring-progress {
+      fill: none;
+      stroke: url(#timerGrad);
+      stroke-width: 10;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.35s linear;
+    }
+
+    .timer-center {
+      position: absolute;
+      text-align: center;
+    }
+
+    .timer-digits {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-status {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 15px;
+      box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+      flex: 1;
+    }
+
+    .btn-secondary {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .stat-box {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 10px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Tasks Section */
+    .task-form {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 640px) {
+      .task-form {
+        grid-template-columns: 1fr 1fr;
+      }
+      .task-form input {
+        grid-column: 1 / -1;
+      }
+      .task-form button {
+        grid-column: 1 / -1;
+      }
+    }
+
+    input[type="text"], select {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 12px;
+      font: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input[type="text"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    select option {
+      background: #111827;
+      color: #f8fafc;
+    }
+
+    body.light select option {
+      background: #ffffff;
+      color: #0f172a;
+    }
+
+    .progress-wrap {
+      margin-bottom: 18px;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: var(--bg-soft);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 999px;
+      transition: width 0.35s ease;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 410px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 14px;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s ease, opacity 0.2s ease;
+    }
+
+    .task-item:hover {
+      border-color: rgba(99, 102, 241, 0.45);
+    }
+
+    .task-item.done {
+      opacity: 0.62;
+    }
+
+    .task-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .check-btn {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      border: 2px solid var(--muted);
+      background: transparent;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .task-item.done .check-btn {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .task-text {
+      font-size: 14px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .tag-cat {
+      background: rgba(34, 211, 238, 0.14);
+      color: var(--accent-2);
+    }
+
+    .tag-high {
+      background: rgba(239, 68, 68, 0.16);
+      color: #f87171;
+    }
+
+    .tag-mid {
+      background: rgba(245, 158, 11, 0.16);
+      color: #fbbf24;
+    }
+
+    .tag-low {
+      background: rgba(16, 185, 129, 0.16);
+      color: #34d399;
+    }
+
+    .del-btn {
+      background: transparent;
+      color: var(--muted);
+      font-size: 16px;
+      padding: 4px 7px;
+      border-radius: 8px;
+    }
+
+    .del-btn:hover {
+      background: rgba(239, 68, 68, 0.16);
+      color: var(--danger);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 36px 16px;
+      color: var(--muted);
+      font-size: 14px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+    }
+
+    /* Weekly Mini Chart */
+    .chart-card {
+      margin-top: 22px;
+    }
+
+    .bars {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      align-items: end;
+      height: 110px;
+      padding-top: 12px;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bar-fill {
+      width: 100%;
+      max-width: 34px;
+      border-radius: 8px 8px 4px 4px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      min-height: 8px;
+      transition: height 0.35s ease;
+    }
+
+    .bar-day {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo">VF</div>
+        <div>
+          <h1>VibeFlow</h1>
+          <p>Умный планировщик учёбы и Pomodoro-таймер • создано методом вайб-кодинга</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="pill" id="todayDate">Загрузка даты...</div>
+        <button class="btn-icon" id="themeToggle" title="Переключить тему">Светлая тема</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left Column: Timer + Stats -->
+      <div>
+        <section class="card">
+          <div class="card-title">
+            <span>Фокус-таймер</span>
+            <span class="badge" id="modeBadge">Фокус</span>
+          </div>
+
+          <div class="mode-tabs">
+            <button class="mode-tab active" data-mode="focus" data-min="25">Фокус 25м</button>
+            <button class="mode-tab" data-mode="short" data-min="5">Перерыв 5м</button>
+            <button class="mode-tab" data-mode="long" data-min="15">Отдых 15м</button>
+          </div>
+
+          <div class="timer-ring-wrap">
+            <svg class="timer-svg" viewBox="0 0 220 220">
+              <defs>
+                <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6366f1" />
+                  <stop offset="100%" stop-color="#22d3ee" />
+                </linearGradient>
+              </defs>
+              <circle class="ring-bg" cx="110" cy="110" r="96" />
+              <circle class="ring-progress" id="ringProgress" cx="110" cy="110" r="96" />
+            </svg>
+            <div class="timer-center">
+              <div class="timer-digits" id="timerDisplay">25:00</div>
+              <div class="timer-status" id="timerStatus">Готов к старту</div>
+            </div>
+          </div>
+
+          <div class="timer-controls">
+            <button class="btn-primary" id="startPauseBtn">Старт</button>
+            <button class="btn-secondary" id="resetBtn">Сброс</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-value" id="sessionsCount">0</div>
+              <div class="stat-label">Сессий</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="focusMinutes">0</div>
+              <div class="stat-label">Минут</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-value" id="doneTasksCount">0</div>
+              <div class="stat-label">Выполнено</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card chart-card">
+          <div class="card-title">
+            <span>Активность за неделю</span>
+            <span class="badge">сессии</span>
+          </div>
+          <div class="bars" id="weeklyChart"></div>
+        </section>
+      </div>
+
+      <!-- Right Column: Task Planner -->
+      <section class="card">
+        <div class="card-title">
+          <span>Планировщик задач</span>
+          <span class="badge" id="taskCounter">0 задач</span>
+        </div>
+
+        <form class="task-form" id="taskForm">
+          <input type="text" id="taskInput" placeholder="Добавить задачу (например: оформить 2 главу проекта)..." required maxlength="120" />
+          <select id="taskCategory" title="Категория">
+            <option value="Учёба">Учёба</option>
+            <option value="Проект">Проект</option>
+            <option value="Личное">Личное</option>
+          </select>
+          <select id="taskPriority" title="Приоритет">
+            <option value="high">Высокий</option>
+            <option value="mid" selected>Средний</option>
+            <option value="low">Низкий</option>
+          </select>
+          <button type="submit" class="btn-primary" style="flex:0; padding:11px 18px;">Добавить</button>
+        </form>
+
+        <div class="progress-wrap">
+          <div class="progress-meta">
+            <span>Прогресс выполнения</span>
+            <strong id="progressPercent">0%</strong>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <div class="filters">
+          <button class="filter-btn active" data-filter="all">Все</button>
+          <button class="filter-btn" data-filter="active">В работе</button>
+          <button class="filter-btn" data-filter="done">Выполненные</button>
+          <button class="filter-btn" data-filter="Проект">Проект</button>
+          <button class="filter-btn" data-filter="Учёба">Учёба</button>
+        </div>
+
+        <ul class="task-list" id="taskList"></ul>
+      </section>
+    </div>
+
+    <footer>
+      VibeFlow • Индивидуальный проект по теме «Вайб-кодинг: создание программ с помощью ИИ» • Все данные сохраняются локально в браузере
+    </footer>
+  </div>
+
+  <script>
+    // --- State & Persistence ---
+    const STORAGE_KEY = "vibeflow_state_v1";
+    const defaultTasks = [
+      { id: 1, text: "Проверить оформление 1 главы проекта", category: "Проект", priority: "high", done: true },
+      { id: 2, text: "Протестировать таймер и сохранение задач в VibeFlow", category: "Проект", priority: "high", done: false },
+      { id: 3, text: "Подготовить презентацию к защите проекта", category: "Учёба", priority: "mid", done: false }
+    ];
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { tasks: defaultTasks, sessions: 2, focusMinutes: 50, theme: "dark", weekly: [1, 2, 1, 3, 2, 1, 2] };
+        const parsed = JSON.parse(raw);
+        return {
+          tasks: Array.isArray(parsed.tasks) ? parsed.tasks : defaultTasks,
+          sessions: Number(parsed.sessions) || 0,
+          focusMinutes: Number(parsed.focusMinutes) || 0,
+          theme: parsed.theme === "light" ? "light" : "dark",
+          weekly: Array.isArray(parsed.weekly) && parsed.weekly.length === 7 ? parsed.weekly : [1, 2, 1, 3, 2, 1, 2]
+        };
+      } catch {
+        return { tasks: defaultTasks, sessions: 0, focusMinutes: 0, theme: "dark", weekly: [0, 0, 0, 0, 0, 0, 0] };
+      }
+    }
+
+    let state = loadState();
+    let currentFilter = "all";
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // --- Date & Theme ---
+    const todayEl = document.getElementById("todayDate");
+    todayEl.textContent = new Date().toLocaleDateString("ru-RU", {
+      weekday: "short", day: "numeric", month: "long"
+    });
+
+    const themeToggle = document.getElementById("themeToggle");
+    function applyTheme() {
+      document.body.classList.toggle("light", state.theme === "light");
+      themeToggle.textContent = state.theme === "light" ? "Тёмная тема" : "Светлая тема";
+    }
+    themeToggle.addEventListener("click", () => {
+      state.theme = state.theme === "light" ? "dark" : "light";
+      applyTheme();
+      saveState();
+    });
+    applyTheme();
+
+    // --- Web Audio Beep (no external audio files) ---
+    function playBeep() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(660, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      } catch (e) {}
+    }
+
+    // --- Pomodoro Timer ---
+    const ring = document.getElementById("ringProgress");
+    const radius = 96;
+    const circumference = 2 * Math.PI * radius;
+    ring.style.strokeDasharray = `${circumference}`;
+
+    let mode = "focus";
+    let totalSeconds = 25 * 60;
+    let remainingSeconds = totalSeconds;
+    let timerId = null;
+
+    const timerDisplay = document.getElementById("timerDisplay");
+    const timerStatus = document.getElementById("timerStatus");
+    const modeBadge = document.getElementById("modeBadge");
+    const startPauseBtn = document.getElementById("startPauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function updateTimerUI() {
+      const m = String(Math.floor(remainingSeconds / 60)).padStart(2, "0");
+      const s = String(remainingSeconds % 60).padStart(2, "0");
+      timerDisplay.textContent = `${m}:${s}`;
+      const ratio = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+      ring.style.strokeDashoffset = `${circumference * (1 - ratio)}`;
+    }
+
+    function stopTimer() {
+      if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      startPauseBtn.textContent = "Старт";
+    }
+
+    function setMode(newMode, minutes, label) {
+      stopTimer();
+      mode = newMode;
+      totalSeconds = minutes * 60;
+      remainingSeconds = totalSeconds;
+      modeBadge.textContent = label;
+      timerStatus.textContent = "Готов к старту";
+      updateTimerUI();
+    }
+
+    document.querySelectorAll(".mode-tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".mode-tab").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const m = btn.dataset.mode;
+        const min = Number(btn.dataset.min);
+        const label = m === "focus" ? "Фокус" : m === "short" ? "Перерыв" : "Отдых";
+        setMode(m, min, label);
+      });
+    });
+
+    startPauseBtn.addEventListener("click", () => {
+      if (timerId) {
+        stopTimer();
+        timerStatus.textContent = "На паузе";
+        return;
+      }
+      timerStatus.textContent = mode === "focus" ? "Идёт фокус-сессия..." : "Время отдыха";
+      startPauseBtn.textContent = "Пауза";
+      timerId = setInterval(() => {
+        remainingSeconds -= 1;
+        updateTimerUI();
+        if (remainingSeconds <= 0) {
+          stopTimer();
+          playBeep();
+          timerStatus.textContent = "Сессия завершена!";
+          if (mode === "focus") {
+            state.sessions += 1;
+            state.focusMinutes += Math.round(totalSeconds / 60);
+            const dayIdx = (new Date().getDay() + 6) % 7;
+            state.weekly[dayIdx] = (state.weekly[dayIdx] || 0) + 1;
+            saveState();
+            renderStats();
+            renderWeeklyChart();
+          }
+        }
+      }, 1000);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      stopTimer();
+      remainingSeconds = totalSeconds;
+      timerStatus.textContent = "Сброшено";
+      updateTimerUI();
+    });
+
+    // --- Tasks & Stats ---
+    const taskForm = document.getElementById("taskForm");
+    const taskInput = document.getElementById("taskInput");
+    const taskCategory = document.getElementById("taskCategory");
+    const taskPriority = document.getElementById("taskPriority");
+    const taskList = document.getElementById("taskList");
+
+    function priorityLabel(p) {
+      if (p === "high") return ["Высокий", "tag-high"];
+      if (p === "mid") return ["Средний", "tag-mid"];
+      return ["Низкий", "tag-low"];
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    }
+
+    function renderStats() {
+      document.getElementById("sessionsCount").textContent = state.sessions;
+      document.getElementById("focusMinutes").textContent = state.focusMinutes;
+      const doneCount = state.tasks.filter(t => t.done).length;
+      document.getElementById("doneTasksCount").textContent = doneCount;
+
+      const total = state.tasks.length;
+      const pct = total ? Math.round((doneCount / total) * 100) : 0;
+      document.getElementById("progressPercent").textContent = `${pct}%`;
+      document.getElementById("progressFill").style.width = `${pct}%`;
+      document.getElementById("taskCounter").textContent = `${total} задач`;
+    }
+
+    function renderWeeklyChart() {
+      const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+      const maxVal = Math.max(...state.weekly, 4);
+      const wrap = document.getElementById("weeklyChart");
+      wrap.innerHTML = state.weekly.map((val, i) => {
+        const h = Math.max(10, Math.round((val / maxVal) * 82));
+        return `
+          <div class="bar-col" title="${days[i]}: ${val} сессий">
+            <div class="bar-fill" style="height:${h}px"></div>
+            <div class="bar-day">${days[i]}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderTasks() {
+      const filtered = state.tasks.filter(t => {
+        if (currentFilter === "active") return !t.done;
+        if (currentFilter === "done") return t.done;
+        if (currentFilter === "Проект" || currentFilter === "Учёба") return t.category === currentFilter;
+        return true;
+      });
+
+      if (!filtered.length) {
+        taskList.innerHTML = `<li class="empty-state">В этой категории пока нет задач. Добавьте новую выше!</li>`;
+        renderStats();
+        return;
+      }
+
+      taskList.innerHTML = filtered.map(t => {
+        const [pText, pClass] = priorityLabel(t.priority);
+        return `
+          <li class="task-item ${t.done ? "done" : ""}" data-id="${t.id}">
+            <div class="task-left">
+              <button class="check-btn" data-action="toggle" title="Отметить выполненной">${t.done ? "✓" : ""}</button>
+              <span class="task-text">${escapeHtml(t.text)}</span>
+            </div>
+            <div class="task-meta">
+              <span class="tag tag-cat">${escapeHtml(t.category)}</span>
+              <span class="tag ${pClass}">${pText}</span>
+              <button class="del-btn" data-action="delete" title="Удалить">✕</button>
+            </div>
+          </li>
+        `;
+      }).join("");
+      renderStats();
+    }
+
+    taskForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = taskInput.value.trim();
+      if (!text) return;
+      state.tasks.unshift({
+        id: Date.now(),
+        text,
+        category: taskCategory.value,
+        priority: taskPriority.value,
+        done: false
+      });
+      taskInput.value = "";
+      saveState();
+      renderTasks();
+    });
+
+    taskList.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const item = btn.closest(".task-item");
+      const id = Number(item.dataset.id);
+      if (btn.dataset.action === "toggle") {
+        const task = state.tasks.find(t => t.id === id);
+        if (task) task.done = !task.done;
+      } else if (btn.dataset.action === "delete") {
+        state.tasks = state.tasks.filter(t => t.id !== id);
+      }
+      saveState();
+      renderTasks();
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderTasks();
+      });
+    });
+
+    updateTimerUI();
+    renderTasks();
+    renderWeeklyChart();
+  </script>
+</body>
+</html>
